@@ -1,10 +1,13 @@
 //jshint esversion:6
+// dotenv must be placed at the top to make all environmental variables global
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-Parser');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
+const encrypt = require('mongoose-encryption');
 
-const app = express();
+const app = express(); 
 
 app.use(express.static("public"));
 app.set('view engine', 'ejs');
@@ -14,10 +17,16 @@ app.use(bodyParser.urlencoded({
 
 mongoose.connect("mongodb://localhost:27017/userDB", {useNewUrlParser: true, useUnifiedTopology: true});
 
-const userSchema = {
+// Create an object from the Mongoose Schema class
+const userSchema = new mongoose.Schema ({
     email: String,
     password: String
-};
+});
+
+
+// Add encyrption plugin to user schema and define the field using the secret to encrypt
+// Mongoose will Encrypt while calling 'save' and Decrypt while calling 'find'
+userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ['password'] });
 
 const User = new mongoose.model("User", userSchema);
 
@@ -39,6 +48,7 @@ app.post("/register", function(req, res) {
         password: req.body.password
     });
 
+    // Mongoose will encrypt password at this stage
     newUser.save(function(err) {
         if(err) {
             console.log(err);
@@ -52,6 +62,7 @@ app.post("/login", function(req, res) {
     const username = req.body.username;
     const password = req.body.password;
 
+    // Mongoose will decrypt password at this stage
     User.findOne({email: username}, function(err, foundUser) {
         if (err) {
             console.log(err);
