@@ -5,7 +5,7 @@ const express = require('express');
 const bodyParser = require('body-Parser');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
-const encrypt = require('mongoose-encryption');
+const md5 = require('md5');
 
 const app = express(); 
 
@@ -26,7 +26,8 @@ const userSchema = new mongoose.Schema ({
 
 // Add encyrption plugin to user schema and define the field using the secret to encrypt
 // Mongoose will Encrypt while calling 'save' and Decrypt while calling 'find'
-userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ['password'] });
+// (moved to hashing)
+// userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ['password'] });
 
 const User = new mongoose.model("User", userSchema);
 
@@ -45,7 +46,7 @@ app.get("/register", function(req, res) {
 app.post("/register", function(req, res) {
     const newUser = new User({
         email: req.body.username,
-        password: req.body.password
+        password: md5(req.body.password)
     });
 
     // Mongoose will encrypt password at this stage
@@ -60,7 +61,7 @@ app.post("/register", function(req, res) {
 
 app.post("/login", function(req, res) {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
 
     // Mongoose will decrypt password at this stage
     User.findOne({email: username}, function(err, foundUser) {
