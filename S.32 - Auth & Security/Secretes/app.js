@@ -2,7 +2,7 @@
 // dotenv must be placed at the top to make all environmental variables global
 require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-Parser');
+const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
 // express-session for session management
@@ -37,7 +37,7 @@ app.use(passport.initialize());
 // Passport uses session 
 app.use(passport.session());
 
-mongoose.connect("mongodb://localhost:27017/userDB", {
+mongoose.connect("mongodb+srv://admin-Karsen:4nP3tEVk@secretapp.2rxhx.mongodb.net/SecretApp?retryWrites=true&w=majority", {
     useNewUrlParser: true,
     useUnifiedTopology: true
 });
@@ -51,7 +51,8 @@ mongoose.set("useCreateIndex", true);
 const userSchema = new mongoose.Schema({
     email: String,
     password: String,
-    googleId: String
+    googleId: String,
+    secret: String
 });
 
 // Add and enable plugin to our mongoose user schema (must be mongoose)
@@ -80,7 +81,7 @@ passport.deserializeUser(function (id, done) {
 passport.use(new GoogleStrategy({
         clientID: process.env.CLIENT_ID,
         clientSecret: process.env.CLIENT_SECRET,
-        callbackURL: "http://localhost:3000/auth/google/secrets",
+        callbackURL: "https://secret-310.herokuapp.com/auth/google/secrets",
         userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
     },
     function (accessToken, refreshToken, profile, cb) {
@@ -122,13 +123,49 @@ app.get("/register", function (req, res) {
     res.render("register");
 });
 
-app.get("/secrets", function (req, res) {
-    if (req.isAuthenticated()) {
-        res.render("secrets");
+app.get("/register", function(req, res){
+    res.render("register");
+  });
+  
+  app.get("/secrets", function(req, res){
+    User.find({"secret": {$ne: null}}, function(err, foundUsers){
+      if (err){
+        console.log(err);
+      } else {
+        if (foundUsers) {
+          res.render("secrets", {usersWithSecrets: foundUsers});
+        }
+      }
+    });
+  });
+  
+  app.get("/submit", function(req, res){
+    if (req.isAuthenticated()){
+      res.render("submit");
     } else {
-        res.redirect("/login");
+      res.redirect("/login");
     }
-});
+  });
+  
+  app.post("/submit", function(req, res){
+    const submittedSecret = req.body.secret;
+  
+  //Once the user is authenticated and their session gets saved, their user details are saved to req.user.
+    // console.log(req.user.id);
+  
+    User.findById(req.user.id, function(err, foundUser){
+      if (err) {
+        console.log(err);
+      } else {
+        if (foundUser) {
+          foundUser.secret = submittedSecret;
+          foundUser.save(function(){
+            res.redirect("/secrets");
+          });
+        }
+      }
+    });
+  });
 
 app.get("/logout", function (req, res) {
     // Deauthenticate user and end session using passport
@@ -175,6 +212,6 @@ app.post("/login", function (req, res) {
 
 
 
-app.listen(3000, function () {
+app.listen(process.env.PORT || 3000, function () {
     console.log("Successfully started Secretes app on port 3000!");
 });
