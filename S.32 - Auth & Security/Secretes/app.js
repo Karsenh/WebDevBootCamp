@@ -37,7 +37,7 @@ app.use(passport.initialize());
 // Passport uses session 
 app.use(passport.session());
 
-mongoose.connect("mongodb+srv://admin-Karsen:4nP3tEVk@secretapp.2rxhx.mongodb.net/SecretApp?retryWrites=true&w=majority", {
+mongoose.connect("mongodb+srv://"+ process.env.MONGO_ACC +"@secretapp.2rxhx.mongodb.net/SecretApp?retryWrites=true&w=majority", {
     useNewUrlParser: true,
     useUnifiedTopology: true
 });
