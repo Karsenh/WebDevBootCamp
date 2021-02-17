@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "keywords": [],
+  "engines": {
+    "node": "12.19.0"
+  },
   "main": "src/index.js",
   "dependencies": {
     "react": "16.8.6",
